@@ -8,21 +8,28 @@ import streamlit as st
 import streamlit.components.v1 as stc
 import time
 import datetime
+import base64
 
 from my_camera import *
 from my_segment import *
 from my_database import *
 
 camera = Camera()
-co2 = Co2()
-tmp = Temperature()
-hum = Humidity()
+co2 = Seven_segmemt_characters("co2")
+tmp = Seven_segmemt_characters("tmp")
+hum = Seven_segmemt_characters("hum")
 db = DB()
+
+def get_data_and_csv():
+    data = db.get_todays_data()
+    csv = data.to_csv(index=True)  
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:application/octet-stream;base64,{b64}" download="result.csv">ダウンロード</a>'
+    return data, href
 
 def main():
     last_date, last_time = db.get_last_datetime()                           # 直近のデータの日付と時刻
     last_datetime = f"{last_date} {last_time}"                              # 日付と時刻を合体したもの
-    cap = cv2.VideoCapture(0)
 
     st_title = st.empty()
     column1, column2 = st.columns(2)
@@ -36,11 +43,16 @@ def main():
         st_tmp = st.empty()
         st_hum = st.empty()
     st.write("")
-    st.write("##### CO2グラフ")
-    st_graph_co2 = st.empty()
-    data = db.get_todays_data()
-    st_graph_co2.line_chart(data["co2"])
 
+    data, href = get_data_and_csv()
+    column3, column4 = st.columns(2)
+    with column3:
+        st.write("##### CO2グラフ")
+    with column4:
+        st_download = st.empty()
+    st_graph_co2 = st.empty()
+    st_graph_co2.line_chart(data["co2"])
+    st_download.markdown(f"{href}", unsafe_allow_html=True)
 
     while True:
         now = datetime.datetime.now()                                       # 現在日時
@@ -66,9 +78,9 @@ def main():
             sql = f"INSERT INTO sensor VALUES('{str_date}', '{str_time}', {value_co2}, {value_tmp}, {value_hum});" 
             db.execute(sql)
 
-            data = db.get_todays_data()
+            data, href = get_data_and_csv()
             st_graph_co2.line_chart(data["co2"])
-
+            st_download.markdown(f"{href}", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

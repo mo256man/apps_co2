@@ -1,41 +1,29 @@
 import cv2
 
-class Co2():
-    # この機種のCO2はまるでデジタル時計のように2桁と2桁の間に隙間があり、4桁として扱うことができない
-    def __init__(self):
-        self.name = "CO2"                               # クラスオブジェクトの名前
-        self.value = ""                                 # 値
-        self.is_readable = False                        # 読み取ることができたかどうか
-        self.width, self.height = 78, 132               # 7セグ文字の幅、高さ
-        self.thickness, self.space = 18, 13             # セグメントの幅、文字間の隙間
-        self.areas = [(31, 63), (225, 63)]              # 7セグ文字エリアの左上座標
-        self.cnt = 2                                    # エリアの中に格納されている文字数
-        self.pos = getPos(self)                         # 7セグ文字の各セグメントの座標
-        self.lastminute = -1                            # データベースにUPDATEした時間の分
-
-class Temperature():
-    def __init__(self):
-        self.name = "Temperature"
+class Seven_segmemt_characters:
+    def __init__(self, type):
+        self.name = type
         self.value = ""
         self.is_readable = False
-        self.width, self.height = 32, 54
-        self.thickness, self.space = 8, 5
-        self.areas = [(509, 58)]
-        self.cnt = 2
-        self.pos = getPos(self)
-        self.lastminute = -1
+        self.cnt = 2                                        # エリアの中に格納されている文字数
 
-class Humidity():
-    def __init__(self):
-        self.name = "Humidity"
-        self.value = ""
-        self.is_readable = False
-        self.width, self.height = 32, 54
-        self.thickness, self.space = 8, 5
-        self.areas = [(511, 147)]
-        self.cnt = 2
-        self.pos = getPos(self)
-        self.lastminute = -1
+        if type == "co2":
+            self.width, self.height = 78, 132               # 7セグ文字の幅、高さ
+            self.thickness, self.space = 18, 13             # セグメントの幅、文字間の隙間
+            self.areas = [(31, 63), (225, 63)]              # 7セグ文字エリアの左上座標
+        elif type == "tmp":
+            self.width, self.height = 32, 54
+            self.thickness, self.space = 8, 5
+            self.areas = [(509, 58)]
+            self.pos = getPos(self)
+        elif type == "hum":
+            self.width, self.height = 32, 54
+            self.thickness, self.space = 8, 5
+            self.areas = [(511, 147)]
+
+        self.pos = getPos(self)                             # 7セグ文字の各セグメントの座標を算出する
+
+
 
 def getPos(obj):
     width = obj.width                                # 7セグ文字の幅
@@ -106,7 +94,7 @@ def readROI(image, obj):
         str_value += val                                        # それを結果に追加する
         if (not ret) or val.strip() == "":                      # 正しく読み取れていなかったら　もしくは　読み取り結果が全部" "で中身なしだったら
             is_readable = False                                 # 総合結果をFalseにする
-        cv2.rectangle(image, (x1,y1), (x2,y2), (0,0,255), 1)
+        # cv2.rectangle(image, (x1,y1), (x2,y2), (0,0,255), 1)
     obj.is_readable = is_readable
     obj.value = str_value.strip()                               # この時点ではまだ文字列
 
@@ -121,15 +109,16 @@ def read_value_in_image(image, objs):
     return result
 
 if __name__=="__main__":
-    filename = "co2.jpeg"
+    filename = "image2.jpg"
     image = cv2.imread(filename)
-    co2 = Co2()
-    tmp = Temperature()
-    hum = Humidity()
+    co2 = Seven_segmemt_characters("co2")
+    tmp = Seven_segmemt_characters("tmp")
+    hum = Seven_segmemt_characters("hum")
 
     ret, value_co2, value_tmp, value_hum = read_value_in_image(image, [co2, tmp, hum])
     print(ret, value_co2, value_tmp, value_hum)
 
     cv2.imshow("co2", image)
     cv2.waitKey(0)
+    cv2.imwrite("seg2_"+filename, image)
     cv2.destroyAllWindows()

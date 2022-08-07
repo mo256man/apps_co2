@@ -48,8 +48,9 @@ class DB():
         times = [[f"{h:0=2}:{10*m:0=2}" for m in range(6)] for h in range(7, 20)]   # 二重の内包表記でhh:m0を作る
         times = sum(times, [])                                                      # 二重のリストを平坦化
         nulls = [None for i in range(len(times))]                                   # timesと同数のNone
-        dict = {"co2":nulls, "tmp":nulls, "hum":nulls}                              # 辞書化
-        df = pd.DataFrame(data=dict, index=times)                                   # データフレーム定義
+        dict = {"time":times, "co2":nulls, "tmp":nulls, "hum":nulls}                # 辞書化
+        df = pd.DataFrame(data=dict)                                                # データフレーム定義
+        df = df.set_index("time")
 
         # dfにデータを追記する
         for row in data:
@@ -61,3 +62,7 @@ class DB():
 
         return df
 
+if __name__=="__main__":
+    db = DB()
+    df = db.get_todays_data()
+    pprint.pprint(df)

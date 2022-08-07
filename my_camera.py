@@ -17,7 +17,9 @@ def img2base64(imgCV):
 
 
 class Camera():
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
+
         # カメラ初期設定
         self.cam = cv2.VideoCapture(0)
         self.dic_aruco = aruco.Dictionary_get(aruco.DICT_4X4_50)
@@ -78,7 +80,7 @@ class Camera():
 
 
 def main():
-    cam = Camera()
+    cam = Camera(debug=True)
 
     while True:
         cam.get_rect()
@@ -87,6 +89,9 @@ def main():
         key = cv2.waitKey(1) & 0xFF
         if key == 27:
             break
+        elif key == ord(" "):
+            cv2.imwrite("image1.jpg", cam.image1)
+            cv2.imwrite("image2.jpg", cam.image2)
 
 if __name__ == "__main__":
     main()
